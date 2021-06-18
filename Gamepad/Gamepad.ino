@@ -121,6 +121,7 @@ typedef struct {
 } hid_report_t;
 
 hid_report_t report;
+hid_report_t prevReport;
 
 void dpad(bool up, bool down, bool left, bool right) {
   if (up && down) {
@@ -147,7 +148,10 @@ void dpad(bool up, bool down, bool left, bool right) {
 }
 
 void sendReport() {
-  HID().SendReport(1, &report, sizeof(report));
+  if (memcmp(&prevReport, &report, sizeof(report))) {
+    HID().SendReport(1, &report, sizeof(report));
+    memcpy(&prevReport, &report, sizeof(report));
+  }
 }
 
 void setup() {
@@ -179,6 +183,7 @@ void setup() {
   report.leftStickYAxis = 0x80;
   report.rightStickXAxis = 0x80;
   report.rightStickYAxis = 0x80;
+  memcpy(&prevReport, &report, sizeof(report));
 }
 
 void loop() {
