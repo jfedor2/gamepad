@@ -123,6 +123,13 @@ typedef struct {
 hid_report_t report;
 
 void dpad(bool up, bool down, bool left, bool right) {
+  if (up && down) {
+    up = down = false;
+  }
+  if (left && right) {
+    left = right = false;
+  }
+
   if (up && !right && !left) report.dpadHat = 0;
   else if (up && right) report.dpadHat = 1;
   else if (right && !up && !down) report.dpadHat = 2;
