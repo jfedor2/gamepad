@@ -21,6 +21,8 @@
 #define PIN_SELECT    18
 #define PIN_START     19
 
+int stickMode = 0; // 0 = dpad, 1 = left stick
+
 // HID report descriptor taken from a HORI Fighting Stick V3
 // works out of the box with PC and PS3
 // as dumped by usbhid-dump and parsed by https://eleccelerator.com/usbdescreqparser/
@@ -131,20 +133,28 @@ void dpad(bool up, bool down, bool left, bool right) {
     left = right = false;
   }
 
-  if (up && !right && !left) report.dpadHat = 0;
-  else if (up && right) report.dpadHat = 1;
-  else if (right && !up && !down) report.dpadHat = 2;
-  else if (right && down) report.dpadHat = 3;
-  else if (down && !right && !left) report.dpadHat = 4;
-  else if (down && left) report.dpadHat = 5;
-  else if (left && !down && !up) report.dpadHat = 6;
-  else if (left && up) report.dpadHat = 7;
-  else report.dpadHat = 0x0f;
+  switch (stickMode) {
+    case 0:
+      if (up && !right && !left) report.dpadHat = 0;
+      else if (up && right) report.dpadHat = 1;
+      else if (right && !up && !down) report.dpadHat = 2;
+      else if (right && down) report.dpadHat = 3;
+      else if (down && !right && !left) report.dpadHat = 4;
+      else if (down && left) report.dpadHat = 5;
+      else if (left && !down && !up) report.dpadHat = 6;
+      else if (left && up) report.dpadHat = 7;
+      else report.dpadHat = 0x0f;
 
-  report.dpadRightAxis = right ? 0xff : 0x00;
-  report.dpadLeftAxis = left ? 0xff : 0x00;
-  report.dpadUpAxis = up ? 0xff : 0x00;
-  report.dpadDownAxis = down ? 0xff : 0x00;
+      report.dpadRightAxis = right ? 0xff : 0x00;
+      report.dpadLeftAxis = left ? 0xff : 0x00;
+      report.dpadUpAxis = up ? 0xff : 0x00;
+      report.dpadDownAxis = down ? 0xff : 0x00;
+      break;
+    case 1:
+      report.leftStickXAxis = left ? 0x00 : (right ? 0xFF : 0x80);
+      report.leftStickYAxis = up ? 0x00 : (down ? 0xFF : 0x80);
+      break;
+  }
 }
 
 void sendReport() {
@@ -172,6 +182,11 @@ void setup() {
   pinMode(PIN_R2, INPUT_PULLUP);
   pinMode(PIN_SELECT, INPUT_PULLUP);
   pinMode(PIN_START, INPUT_PULLUP);
+
+  // if left is held when plugged in, switch to left stick emulation mode
+  if (digitalRead(PIN_LEFT) == LOW) {
+    stickMode = 1;
+  }
 
   memset(&report, 0, sizeof(report));
   report.dpadHat = 0x0f;
